@@ -1,134 +1,137 @@
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgSRS1__YPochn7v2czFZCJOTVwc7dUe3pDFrGibjBMXOGHHS9V9VdUas5mibWfDEq/exec';
-let currentNotes = [];
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEEsAdDKlcjXeWBs60xMJG3Peo_5vwTyij-9Ha4McqBpjoOpzpSSNWblB8GtE-zby8/exec'; // GANTI INI
+let allNotes = [];
 
-// 1. Logic Auth & Auto-Logout (1 Jam)
-function checkAuth() {
+// --- AUTH & SESSION ---
+async function checkAuth() {
     const code = document.getElementById('access-code').value;
-    fetch('/api/auth', {
+    const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code })
-    }).then(res => {
-        if (res.ok) {
-            localStorage.setItem('session_start', Date.now());
-            showMain();
-        } else {
-            alert('Kode akses salah!');
-        }
     });
-}
 
-function autoLogout() {
-    const loginTime = localStorage.getItem('session_start');
-    if (loginTime) {
-        const hoursPassed = (Date.now() - loginTime) / (1000 * 60 * 60);
-        if (hoursPassed >= 1) { // 1 Jam
-            logout();
-        }
+    if (res.ok) {
+        localStorage.setItem('notes_auth', Date.now());
+        showApp();
+    } else {
+        alert('Kode salah!');
     }
 }
 
-function logout() {
-    localStorage.clear();
-    location.reload();
+function autoLogout() {
+    const session = localStorage.getItem('notes_auth');
+    if (session && (Date.now() - session > 3600000)) logout();
 }
+setInterval(autoLogout, 60000);
 
-setInterval(autoLogout, 60000); // Cek tiap menit
+function logout() { localStorage.clear(); location.reload(); }
 
-// 2. Navigation & UI
-function showMain() {
+// --- UI LOGIC ---
+function showApp() {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('main-content').classList.remove('hidden');
     lucide.createIcons();
     loadNotes();
 }
-
-if (localStorage.getItem('session_start')) showMain();
+if (localStorage.getItem('notes_auth')) showApp();
 
 function closeModals() {
-    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+    document.getElementById('form-modal').classList.add('hidden');
+    document.getElementById('preview-modal').classList.add('hidden');
 }
 
-// 3. CRUD Operations
-async function loadNotes() {
-    const grid = document.getElementById('notes-grid');
-    grid.innerHTML = '<div class="loader">Memperbarui...</div>';
-    
-    try {
-        const res = await fetch(SCRIPT_URL);
-        currentNotes = await res.json();
-        grid.innerHTML = '';
-        
-        currentNotes.reverse().forEach(note => {
-            const card = document.createElement('div');
-            card.className = 'note-card';
-            card.onclick = () => openPreview(note.id);
-            card.innerHTML = `<p>${note.note.substring(0, 100)}${note.note.length > 100 ? '...' : ''}</p>`;
-            grid.appendChild(card);
-        });
-    } catch (e) {
-        grid.innerHTML = 'Gagal memuat data.';
-    }
-}
-
-function openFormModal(id = null) {
+function openForm(id = null) {
     const modal = document.getElementById('form-modal');
-    const title = document.getElementById('modal-title');
     const input = document.getElementById('note-input');
-    const idInput = document.getElementById('note-id');
+    const idField = document.getElementById('note-id');
+    const title = document.getElementById('modal-title');
 
     if (id) {
-        const note = currentNotes.find(n => n.id === id);
-        title.innerText = 'Edit Catatan';
+        const note = allNotes.find(n => n.id === id);
+        title.innerText = "Edit Catatan";
         input.value = note.note;
-        idInput.value = id;
+        idField.value = id;
     } else {
-        title.innerText = 'Catatan Baru';
-        input.value = '';
-        idInput.value = '';
+        title.innerText = "Catatan Baru";
+        input.value = "";
+        idField.value = "";
     }
     modal.classList.remove('hidden');
-    lucide.createIcons();
 }
 
 function openPreview(id) {
-    const note = currentNotes.find(n => n.id === id);
+    const note = allNotes.find(n => n.id === id);
     document.getElementById('preview-date').innerText = new Date(note.date).toLocaleString('id-ID');
     document.getElementById('preview-body').innerText = note.note;
     
-    document.getElementById('edit-icon').onclick = () => { closeModals(); openFormModal(id); };
-    document.getElementById('delete-icon').onclick = () => deleteNote(id);
+    // Pasang fungsi ke tombol aksi
+    document.getElementById('btn-edit-trigger').onclick = () => { closeModals(); openForm(id); };
+    document.getElementById('btn-delete-trigger').onclick = () => deleteNote(id);
     
     document.getElementById('preview-modal').classList.remove('hidden');
-    lucide.createIcons();
+}
+
+// --- DATA OPERATIONS (CRUD) ---
+async function loadNotes() {
+    const grid = document.getElementById('notes-grid');
+    grid.innerHTML = "Memuat...";
+    
+    try {
+        const res = await fetch(SCRIPT_URL);
+        allNotes = await res.json();
+        grid.innerHTML = "";
+        
+        allNotes.reverse().forEach(n => {
+            const card = document.createElement('div');
+            card.className = 'note-card';
+            card.onclick = () => openPreview(n.id);
+            card.innerHTML = `<p>${n.note.substring(0, 120)}...</p>`;
+            grid.appendChild(card);
+        });
+    } catch (e) { grid.innerHTML = "Gagal memuat."; }
 }
 
 async function saveNote() {
-    const noteText = document.getElementById('note-input').value;
+    const btn = document.getElementById('btn-save');
+    const note = document.getElementById('note-input').value;
     const id = document.getElementById('note-id').value;
-    if (!noteText) return;
+    if (!note) return;
 
-    const action = id ? 'edit' : 'add';
-    closeModals();
+    btn.disabled = true;
+    btn.innerText = "MENYIMPAN...";
 
+    const payload = {
+        action: id ? 'edit' : 'add',
+        id: id ? parseInt(id) : null,
+        note: note
+    };
+
+    // Menggunakan POST ke GAS
     await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        body: JSON.stringify({ action, id: parseInt(id), note: noteText })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
     });
 
-    setTimeout(loadNotes, 1500);
+    // Karena no-cors tidak bisa baca respon, kita asumsikan sukses & reload
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerText = "SIMPAN CATATAN";
+        closeModals();
+        loadNotes();
+    }, 1000);
 }
 
 async function deleteNote(id) {
-    if (!confirm('Hapus catatan ini?')) return;
-    closeModals();
+    if (!confirm("Hapus catatan ini selamanya?")) return;
     
+    closeModals();
     await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
         body: JSON.stringify({ action: 'delete', id: parseInt(id) })
     });
 
-    setTimeout(loadNotes, 1500);
+    setTimeout(loadNotes, 1000);
 }
