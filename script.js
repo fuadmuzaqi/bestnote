@@ -1,12 +1,10 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEEsAdDKlcjXeWBs60xMJG3Peo_5vwTyij-9Ha4McqBpjoOpzpSSNWblB8GtE-zby8/exec';
 let allNotes = [];
+let activeNoteId = null;
 
-// --- AUTHENTICATION ---
+// --- AUTH & SESSION ---
 async function checkAuth() {
     const code = document.getElementById('access-code').value;
-    const btn = event.target;
-    btn.innerText = "Mengecek...";
-    
     const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -14,120 +12,110 @@ async function checkAuth() {
     });
 
     if (res.ok) {
-        localStorage.setItem('best_note_session', Date.now());
-        showApp();
+        localStorage.setItem('bn_session', Date.now());
+        initApp();
     } else {
-        alert('Maaf, kode akses salah.');
-        btn.innerText = "Masuk";
+        alert('Passcode Salah');
     }
 }
 
-function autoLogout() {
-    const session = localStorage.getItem('best_note_session');
-    if (session && (Date.now() - session > 3600000)) logout();
-}
-setInterval(autoLogout, 60000);
-
-function logout() { localStorage.clear(); location.reload(); }
-
-// --- UI CONTROL ---
-function showApp() {
+function initApp() {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('main-content').classList.remove('hidden');
     loadNotes();
 }
-if (localStorage.getItem('best_note_session')) showApp();
 
+if (localStorage.getItem('bn_session')) {
+    // Cek logout 1 jam
+    if (Date.now() - localStorage.getItem('bn_session') > 3600000) logout();
+    else initApp();
+}
+
+function logout() { localStorage.clear(); location.reload(); }
+
+// --- UI HELPERS ---
 function closeModals() {
-    document.getElementById('form-modal').classList.add('hidden');
-    document.getElementById('preview-modal').classList.add('hidden');
+    document.querySelectorAll('.modal').forEach(m => {
+        if(m.id !== 'login-screen') m.classList.add('hidden');
+    });
 }
 
-function openForm(id = null) {
-    const input = document.getElementById('note-input');
-    const idField = document.getElementById('note-id');
-    const title = document.getElementById('modal-title');
-
-    if (id) {
-        const note = allNotes.find(n => n.id === id);
-        title.innerText = "Edit Catatan";
-        input.value = note.note;
-        idField.value = id;
-    } else {
-        title.innerText = "Catatan Baru";
-        input.value = "";
-        idField.value = "";
-    }
-    document.getElementById('form-modal').classList.remove('hidden');
-}
-
-function openPreview(id) {
-    const note = allNotes.find(n => n.id === id);
-    document.getElementById('preview-date').innerText = new Date(note.date).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
-    document.getElementById('preview-body').innerText = note.note;
-    
-    document.getElementById('btn-edit-trigger').onclick = () => { closeModals(); openForm(id); };
-    document.getElementById('btn-delete-trigger').onclick = () => deleteNote(id);
-    
-    document.getElementById('preview-modal').classList.remove('hidden');
-}
-
-// --- DATA LOGIC ---
+// --- CRUD ---
 async function loadNotes() {
     const grid = document.getElementById('notes-grid');
-    grid.innerHTML = '<div class="loader">Sinkronisasi data...</div>';
-    
+    grid.innerHTML = "<p>Syncing...</p>";
     try {
         const res = await fetch(SCRIPT_URL);
         allNotes = await res.json();
         grid.innerHTML = "";
-        
         allNotes.reverse().forEach(n => {
             const card = document.createElement('div');
             card.className = 'note-card';
-            card.onclick = () => openPreview(n.id);
+            card.onclick = () => showPreview(n.id);
             card.innerHTML = `<p>${n.note}</p>`;
             grid.appendChild(card);
         });
-    } catch (e) { grid.innerHTML = "Gagal memuat catatan."; }
+    } catch (e) { grid.innerHTML = "Gagal memuat."; }
+}
+
+function showPreview(id) {
+    const note = allNotes.find(n => n.id === id);
+    activeNoteId = id;
+    document.getElementById('preview-date').innerText = new Date(note.date).toLocaleString('id-ID');
+    document.getElementById('preview-body').innerText = note.note;
+    document.getElementById('preview-modal').classList.remove('hidden');
+}
+
+function openForm() {
+    document.getElementById('note-id').value = "";
+    document.getElementById('note-input').value = "";
+    document.getElementById('modal-title').innerText = "Tulis Catatan";
+    document.getElementById('form-modal').classList.remove('hidden');
+}
+
+function prepareEdit() {
+    const note = allNotes.find(n => n.id === activeNoteId);
+    document.getElementById('note-id').value = activeNoteId;
+    document.getElementById('note-input').value = note.note;
+    document.getElementById('modal-title').innerText = "Edit Catatan";
+    closeModals();
+    document.getElementById('form-modal').classList.remove('hidden');
 }
 
 async function saveNote() {
     const btn = document.getElementById('btn-save');
-    const note = document.getElementById('note-input').value;
+    const noteText = document.getElementById('note-input').value;
     const id = document.getElementById('note-id').value;
-    if (!note) return;
+    if(!noteText) return;
 
+    btn.innerText = "SAVING...";
     btn.disabled = true;
-    btn.innerText = "MENYIMPAN...";
-
-    const payload = {
-        action: id ? 'edit' : 'add',
-        id: id ? parseInt(id) : null,
-        note: note
-    };
 
     await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+            action: id ? 'edit' : 'add',
+            id: id ? parseInt(id) : null,
+            note: noteText
+        })
     });
 
     setTimeout(() => {
+        btn.innerText = "SIMPAN";
+        btn.disabled = false;
         closeModals();
         loadNotes();
-        btn.disabled = false;
-        btn.innerText = "Simpan Sekarang";
     }, 1200);
 }
 
-async function deleteNote(id) {
-    if (!confirm("Hapus catatan ini?")) return;
+async function deleteNote() {
+    if(!confirm("Hapus catatan?")) return;
     closeModals();
     await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        body: JSON.stringify({ action: 'delete', id: parseInt(id) })
+        body: JSON.stringify({ action: 'delete', id: activeNoteId })
     });
     setTimeout(loadNotes, 1000);
 }
