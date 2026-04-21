@@ -3,57 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes Pro</title>
+    <title>Bento Notes</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <div id="login-screen" class="overlay">
-        <div class="card login-card">
-            <h2>Access Code</h2>
-            <input type="password" id="access-code" placeholder="••••••">
-            <button onclick="checkAuth()" class="btn-primary">Masuk</button>
+    <div id="login-screen" class="modal">
+        <div class="modal-content" style="max-width: 320px; text-align: center;">
+            <h2 class="logo">ACCESS CODE</h2>
+            <input type="password" id="access-code" placeholder="Masukkan Kode" style="width:100%; padding:12px; border:3px solid #000; border-radius:10px; margin: 15px 0;">
+            <button onclick="checkAuth()" class="btn-main">MASUK</button>
         </div>
     </div>
 
     <div id="main-content" class="container hidden">
-        <header class="navbar">
-            <div class="logo">MyNotes</div>
+        <nav class="navbar">
+            <div class="logo">BENTO.DOCS</div>
             <div class="nav-icons">
-                <i data-lucide="plus-circle" onclick="openFormModal()" title="Tulis"></i>
-                <i data-lucide="rotate-cw" onclick="loadNotes()" title="Refresh"></i>
-                <i data-lucide="log-out" onclick="logout()" title="Keluar"></i>
+                <i data-lucide="plus" onclick="openForm()"></i>
+                <i data-lucide="refresh-cw" onclick="loadNotes()"></i>
+                <i data-lucide="log-out" onclick="logout()"></i>
             </div>
-        </header>
+        </nav>
 
-        <div id="notes-grid" class="notes-grid">
-            <div class="loader">Memuat catatan...</div>
-        </div>
+        <div id="notes-grid" class="notes-grid"></div>
     </div>
 
     <div id="form-modal" class="modal hidden">
-        <div class="modal-content card">
+        <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modal-title">Catatan Baru</h3>
-                <i data-lucide="x" onclick="closeModals()"></i>
+                <h3 id="modal-title" style="margin:0">Catatan</h3>
+                <i data-lucide="x" onclick="closeModals()" style="cursor:pointer"></i>
             </div>
             <input type="hidden" id="note-id">
-            <textarea id="note-input" placeholder="Tulis sesuatu di sini..."></textarea>
-            <button onclick="saveNote()" class="btn-primary">Simpan</button>
+            <textarea id="note-input" placeholder="Apa yang ingin kamu catat hari ini?"></textarea>
+            <button onclick="saveNote()" id="btn-save" class="btn-main">SIMPAN CATATAN</button>
         </div>
     </div>
 
     <div id="preview-modal" class="modal hidden">
-        <div class="modal-content card">
+        <div class="modal-content">
             <div class="modal-header">
-                <small id="preview-date"></small>
-                <div class="action-icons">
-                    <i data-lucide="edit-3" id="edit-icon" class="edit-btn"></i>
-                    <i data-lucide="trash-2" id="delete-icon" class="delete-btn"></i>
-                    <i data-lucide="x" onclick="closeModals()"></i>
+                <small id="preview-date" style="font-weight:bold"></small>
+                <div style="display:flex; gap:10px">
+                    <i data-lucide="edit-3" id="btn-edit-trigger" class="icon-action icon-edit"></i>
+                    <i data-lucide="trash-2" id="btn-delete-trigger" class="icon-action icon-delete"></i>
+                    <i data-lucide="x" onclick="closeModals()" style="cursor:pointer"></i>
                 </div>
             </div>
-            <div id="preview-body" class="scrollable-content"></div>
+            <div id="preview-body" class="scrollable"></div>
         </div>
     </div>
 
