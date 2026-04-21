@@ -1,9 +1,12 @@
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEEsAdDKlcjXeWBs60xMJG3Peo_5vwTyij-9Ha4McqBpjoOpzpSSNWblB8GtE-zby8/exec'; // GANTI INI
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEEsAdDKlcjXeWBs60xMJG3Peo_5vwTyij-9Ha4McqBpjoOpzpSSNWblB8GtE-zby8/exec';
 let allNotes = [];
 
-// --- AUTH & SESSION ---
+// --- AUTHENTICATION ---
 async function checkAuth() {
     const code = document.getElementById('access-code').value;
+    const btn = event.target;
+    btn.innerText = "Mengecek...";
+    
     const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -11,29 +14,29 @@ async function checkAuth() {
     });
 
     if (res.ok) {
-        localStorage.setItem('notes_auth', Date.now());
+        localStorage.setItem('best_note_session', Date.now());
         showApp();
     } else {
-        alert('Kode salah!');
+        alert('Maaf, kode akses salah.');
+        btn.innerText = "Masuk";
     }
 }
 
 function autoLogout() {
-    const session = localStorage.getItem('notes_auth');
+    const session = localStorage.getItem('best_note_session');
     if (session && (Date.now() - session > 3600000)) logout();
 }
 setInterval(autoLogout, 60000);
 
 function logout() { localStorage.clear(); location.reload(); }
 
-// --- UI LOGIC ---
+// --- UI CONTROL ---
 function showApp() {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('main-content').classList.remove('hidden');
-    lucide.createIcons();
     loadNotes();
 }
-if (localStorage.getItem('notes_auth')) showApp();
+if (localStorage.getItem('best_note_session')) showApp();
 
 function closeModals() {
     document.getElementById('form-modal').classList.add('hidden');
@@ -41,7 +44,6 @@ function closeModals() {
 }
 
 function openForm(id = null) {
-    const modal = document.getElementById('form-modal');
     const input = document.getElementById('note-input');
     const idField = document.getElementById('note-id');
     const title = document.getElementById('modal-title');
@@ -56,25 +58,24 @@ function openForm(id = null) {
         input.value = "";
         idField.value = "";
     }
-    modal.classList.remove('hidden');
+    document.getElementById('form-modal').classList.remove('hidden');
 }
 
 function openPreview(id) {
     const note = allNotes.find(n => n.id === id);
-    document.getElementById('preview-date').innerText = new Date(note.date).toLocaleString('id-ID');
+    document.getElementById('preview-date').innerText = new Date(note.date).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
     document.getElementById('preview-body').innerText = note.note;
     
-    // Pasang fungsi ke tombol aksi
     document.getElementById('btn-edit-trigger').onclick = () => { closeModals(); openForm(id); };
     document.getElementById('btn-delete-trigger').onclick = () => deleteNote(id);
     
     document.getElementById('preview-modal').classList.remove('hidden');
 }
 
-// --- DATA OPERATIONS (CRUD) ---
+// --- DATA LOGIC ---
 async function loadNotes() {
     const grid = document.getElementById('notes-grid');
-    grid.innerHTML = "Memuat...";
+    grid.innerHTML = '<div class="loader">Sinkronisasi data...</div>';
     
     try {
         const res = await fetch(SCRIPT_URL);
@@ -85,10 +86,10 @@ async function loadNotes() {
             const card = document.createElement('div');
             card.className = 'note-card';
             card.onclick = () => openPreview(n.id);
-            card.innerHTML = `<p>${n.note.substring(0, 120)}...</p>`;
+            card.innerHTML = `<p>${n.note}</p>`;
             grid.appendChild(card);
         });
-    } catch (e) { grid.innerHTML = "Gagal memuat."; }
+    } catch (e) { grid.innerHTML = "Gagal memuat catatan."; }
 }
 
 async function saveNote() {
@@ -106,32 +107,27 @@ async function saveNote() {
         note: note
     };
 
-    // Menggunakan POST ke GAS
     await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     });
 
-    // Karena no-cors tidak bisa baca respon, kita asumsikan sukses & reload
     setTimeout(() => {
-        btn.disabled = false;
-        btn.innerText = "SIMPAN CATATAN";
         closeModals();
         loadNotes();
-    }, 1000);
+        btn.disabled = false;
+        btn.innerText = "Simpan Sekarang";
+    }, 1200);
 }
 
 async function deleteNote(id) {
-    if (!confirm("Hapus catatan ini selamanya?")) return;
-    
+    if (!confirm("Hapus catatan ini?")) return;
     closeModals();
     await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
         body: JSON.stringify({ action: 'delete', id: parseInt(id) })
     });
-
     setTimeout(loadNotes, 1000);
 }
