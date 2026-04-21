@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-screen" class="overlay">
+        <div class="card">
+            <h2>Access Code</h2>
+            <input type="password" id="access-code" placeholder="Masukkan kode...">
+            <button onclick="checkAuth()">Masuk</button>
+        </div>
+    </div>
+
+    <div id="main-content" class="container hidden">
+        <header>
+            <h1>Catatan Saya</h1>
+            <button id="logout-btn" onclick="logout()">Keluar</button>
+        </header>
+
+        <div class="input-section">
+            <textarea id="note-input" placeholder="Tulis sesuatu..."></textarea>
+            <button onclick="saveNote()">Simpan Catatan</button>
+        </div>
+
+        <div id="notes-list" class="notes-grid">
+            </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
