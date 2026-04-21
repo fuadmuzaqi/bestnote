@@ -2,77 +2,61 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Best Note - Smart Keeper</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Best Note</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="login-screen" class="modal-overlay">
-        <div class="glass-card login-box">
-            <div class="brand-logo">
-                <i class="ph-fill ph-note-pencil"></i>
-                <span>Best Note</span>
-            </div>
-            <p>Masukkan kode akses untuk melanjutkan</p>
-            <input type="password" id="access-code" placeholder="••••••">
-            <button onclick="checkAuth()" class="btn-main">Masuk</button>
+
+    <div id="login-screen" class="modal">
+        <div class="modal-content" style="max-width: 320px; text-align: center;">
+            <i class="ph-fill ph-lock-key" style="font-size: 3rem; color: var(--primary)"></i>
+            <h2 style="margin: 10px 0">Best Note</h2>
+            <input type="password" id="access-code" placeholder="Passcode" style="width:100%; padding:12px; border:2px solid #000; border-radius:10px; margin: 15px 0; text-align: center;">
+            <button onclick="checkAuth()" class="btn-submit">UNLOCK</button>
         </div>
     </div>
 
-    <div id="main-content" class="app-container hidden">
-        <header class="top-nav">
-            <div class="brand-logo">
-                <i class="ph-fill ph-lightning"></i>
-                <span>Best Note</span>
+    <div id="main-content" class="hidden">
+        <nav class="navbar">
+            <div class="brand"><i class="ph-fill ph-notebook"></i> Best Note</div>
+            <div class="nav-btns">
+                <button class="btn-icon" onclick="openForm()"><i class="ph ph-plus"></i></button>
+                <button class="btn-icon" onclick="loadNotes()"><i class="ph ph-arrows-clockwise"></i></button>
+                <button class="btn-icon" onclick="logout()"><i class="ph ph-sign-out"></i></button>
             </div>
-            <div class="nav-actions">
-                <button class="icon-btn" onclick="openForm()" title="Tulis Catatan">
-                    <i class="ph ph-plus"></i>
-                </button>
-                <button class="icon-btn" onclick="loadNotes()" title="Refresh">
-                    <i class="ph ph-arrows-clockwise"></i>
-                </button>
-                <button class="icon-btn logout" onclick="logout()" title="Keluar">
-                    <i class="ph ph-sign-out"></i>
-                </button>
-            </div>
-        </header>
+        </nav>
 
-        <main id="notes-grid" class="bento-grid">
-            <div class="loader">Menyiapkan catatan kamu...</div>
-        </main>
+        <div class="app-content">
+            <div id="notes-grid" class="notes-grid"></div>
+        </div>
     </div>
 
-    <div id="form-modal" class="modal-overlay hidden">
-        <div class="glass-card modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title">Buat Catatan</h3>
-                <button class="close-btn" onclick="closeModals()"><i class="ph ph-x"></i></button>
+    <div id="form-modal" class="modal hidden">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 id="modal-title" style="margin:0">Tulis Catatan</h3>
+                <i class="ph ph-x" onclick="closeModals()" style="font-size:1.5rem; cursor:pointer"></i>
             </div>
             <input type="hidden" id="note-id">
-            <textarea id="note-input" placeholder="Tuliskan pikiranmu di sini..."></textarea>
-            <button onclick="saveNote()" id="btn-save" class="btn-main">Simpan Sekarang</button>
+            <textarea id="note-input" placeholder="Tulis sesuatu..."></textarea>
+            <button onclick="saveNote()" id="btn-save" class="btn-submit">SIMPAN</button>
         </div>
     </div>
 
-    <div id="preview-modal" class="modal-overlay hidden">
-        <div class="glass-card modal-content">
-            <div class="modal-header">
-                <span id="preview-date" class="date-tag"></span>
-                <div class="action-group">
-                    <button class="action-btn edit" id="btn-edit-trigger"><i class="ph ph-pencil-simple"></i></button>
-                    <button class="action-btn delete" id="btn-delete-trigger"><i class="ph ph-trash"></i></button>
-                    <button class="close-btn" onclick="closeModals()"><i class="ph ph-x"></i></button>
+    <div id="preview-modal" class="modal hidden">
+        <div class="modal-content">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; border-bottom:2px solid #eee; padding-bottom:10px;">
+                <div id="preview-date" style="font-size:0.8rem; font-weight:bold; color:var(--text-muted)"></div>
+                <div class="actions">
+                    <div class="btn-action" onclick="prepareEdit()" style="background:#eef2ff"><i class="ph ph-pencil-simple"></i></div>
+                    <div class="btn-action" onclick="deleteNote()" style="background:#fef2f2; color:red"><i class="ph ph-trash"></i></div>
+                    <div class="btn-action" onclick="closeModals()"><i class="ph ph-x"></i></div>
                 </div>
             </div>
-            <div id="preview-body" class="preview-scroll"></div>
+            <div id="preview-body" class="preview-text"></div>
         </div>
     </div>
 
