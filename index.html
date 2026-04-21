@@ -3,55 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bento Notes</title>
+    <title>Best Note - Smart Keeper</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <div id="login-screen" class="modal">
-        <div class="modal-content" style="max-width: 320px; text-align: center;">
-            <h2 class="logo">ACCESS CODE</h2>
-            <input type="password" id="access-code" placeholder="Masukkan Kode" style="width:100%; padding:12px; border:3px solid #000; border-radius:10px; margin: 15px 0;">
-            <button onclick="checkAuth()" class="btn-main">MASUK</button>
+    <div id="login-screen" class="modal-overlay">
+        <div class="glass-card login-box">
+            <div class="brand-logo">
+                <i class="ph-fill ph-note-pencil"></i>
+                <span>Best Note</span>
+            </div>
+            <p>Masukkan kode akses untuk melanjutkan</p>
+            <input type="password" id="access-code" placeholder="••••••">
+            <button onclick="checkAuth()" class="btn-main">Masuk</button>
         </div>
     </div>
 
-    <div id="main-content" class="container hidden">
-        <nav class="navbar">
-            <div class="logo">BENTO.DOCS</div>
-            <div class="nav-icons">
-                <i data-lucide="plus" onclick="openForm()"></i>
-                <i data-lucide="refresh-cw" onclick="loadNotes()"></i>
-                <i data-lucide="log-out" onclick="logout()"></i>
+    <div id="main-content" class="app-container hidden">
+        <header class="top-nav">
+            <div class="brand-logo">
+                <i class="ph-fill ph-lightning"></i>
+                <span>Best Note</span>
             </div>
-        </nav>
+            <div class="nav-actions">
+                <button class="icon-btn" onclick="openForm()" title="Tulis Catatan">
+                    <i class="ph ph-plus"></i>
+                </button>
+                <button class="icon-btn" onclick="loadNotes()" title="Refresh">
+                    <i class="ph ph-arrows-clockwise"></i>
+                </button>
+                <button class="icon-btn logout" onclick="logout()" title="Keluar">
+                    <i class="ph ph-sign-out"></i>
+                </button>
+            </div>
+        </header>
 
-        <div id="notes-grid" class="notes-grid"></div>
+        <main id="notes-grid" class="bento-grid">
+            <div class="loader">Menyiapkan catatan kamu...</div>
+        </main>
     </div>
 
-    <div id="form-modal" class="modal hidden">
-        <div class="modal-content">
+    <div id="form-modal" class="modal-overlay hidden">
+        <div class="glass-card modal-content">
             <div class="modal-header">
-                <h3 id="modal-title" style="margin:0">Catatan</h3>
-                <i data-lucide="x" onclick="closeModals()" style="cursor:pointer"></i>
+                <h3 id="modal-title">Buat Catatan</h3>
+                <button class="close-btn" onclick="closeModals()"><i class="ph ph-x"></i></button>
             </div>
             <input type="hidden" id="note-id">
-            <textarea id="note-input" placeholder="Apa yang ingin kamu catat hari ini?"></textarea>
-            <button onclick="saveNote()" id="btn-save" class="btn-main">SIMPAN CATATAN</button>
+            <textarea id="note-input" placeholder="Tuliskan pikiranmu di sini..."></textarea>
+            <button onclick="saveNote()" id="btn-save" class="btn-main">Simpan Sekarang</button>
         </div>
     </div>
 
-    <div id="preview-modal" class="modal hidden">
-        <div class="modal-content">
+    <div id="preview-modal" class="modal-overlay hidden">
+        <div class="glass-card modal-content">
             <div class="modal-header">
-                <small id="preview-date" style="font-weight:bold"></small>
-                <div style="display:flex; gap:10px">
-                    <i data-lucide="edit-3" id="btn-edit-trigger" class="icon-action icon-edit"></i>
-                    <i data-lucide="trash-2" id="btn-delete-trigger" class="icon-action icon-delete"></i>
-                    <i data-lucide="x" onclick="closeModals()" style="cursor:pointer"></i>
+                <span id="preview-date" class="date-tag"></span>
+                <div class="action-group">
+                    <button class="action-btn edit" id="btn-edit-trigger"><i class="ph ph-pencil-simple"></i></button>
+                    <button class="action-btn delete" id="btn-delete-trigger"><i class="ph ph-trash"></i></button>
+                    <button class="close-btn" onclick="closeModals()"><i class="ph ph-x"></i></button>
                 </div>
             </div>
-            <div id="preview-body" class="scrollable"></div>
+            <div id="preview-body" class="preview-scroll"></div>
         </div>
     </div>
 
