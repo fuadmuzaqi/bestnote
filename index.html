@@ -3,31 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Notes</title>
+    <title>Notes Pro</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div id="login-screen" class="overlay">
-        <div class="card">
+        <div class="card login-card">
             <h2>Access Code</h2>
-            <input type="password" id="access-code" placeholder="Masukkan kode...">
-            <button onclick="checkAuth()">Masuk</button>
+            <input type="password" id="access-code" placeholder="••••••">
+            <button onclick="checkAuth()" class="btn-primary">Masuk</button>
         </div>
     </div>
 
     <div id="main-content" class="container hidden">
-        <header>
-            <h1>Catatan Saya</h1>
-            <button id="logout-btn" onclick="logout()">Keluar</button>
+        <header class="navbar">
+            <div class="logo">MyNotes</div>
+            <div class="nav-icons">
+                <i data-lucide="plus-circle" onclick="openFormModal()" title="Tulis"></i>
+                <i data-lucide="rotate-cw" onclick="loadNotes()" title="Refresh"></i>
+                <i data-lucide="log-out" onclick="logout()" title="Keluar"></i>
+            </div>
         </header>
 
-        <div class="input-section">
-            <textarea id="note-input" placeholder="Tulis sesuatu..."></textarea>
-            <button onclick="saveNote()">Simpan Catatan</button>
+        <div id="notes-grid" class="notes-grid">
+            <div class="loader">Memuat catatan...</div>
         </div>
+    </div>
 
-        <div id="notes-list" class="notes-grid">
+    <div id="form-modal" class="modal hidden">
+        <div class="modal-content card">
+            <div class="modal-header">
+                <h3 id="modal-title">Catatan Baru</h3>
+                <i data-lucide="x" onclick="closeModals()"></i>
             </div>
+            <input type="hidden" id="note-id">
+            <textarea id="note-input" placeholder="Tulis sesuatu di sini..."></textarea>
+            <button onclick="saveNote()" class="btn-primary">Simpan</button>
+        </div>
+    </div>
+
+    <div id="preview-modal" class="modal hidden">
+        <div class="modal-content card">
+            <div class="modal-header">
+                <small id="preview-date"></small>
+                <div class="action-icons">
+                    <i data-lucide="edit-3" id="edit-icon" class="edit-btn"></i>
+                    <i data-lucide="trash-2" id="delete-icon" class="delete-btn"></i>
+                    <i data-lucide="x" onclick="closeModals()"></i>
+                </div>
+            </div>
+            <div id="preview-body" class="scrollable-content"></div>
+        </div>
     </div>
 
     <script src="script.js"></script>
